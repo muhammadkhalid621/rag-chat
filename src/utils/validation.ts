@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const retrievedContextSchema = z.union([z.record(z.unknown()), z.string().min(1)]);
+
 export const createSessionSchema = z
   .object({
     userId: z.string().min(1).max(255),
@@ -23,7 +25,14 @@ export const createMessageSchema = z
   .object({
     sender: z.enum(['user', 'assistant', 'system']),
     content: z.string().min(1),
-    retrievedContext: z.record(z.unknown()).optional()
+    retrievedContext: retrievedContextSchema.optional()
+  })
+  .strict();
+
+export const generateChatSchema = z
+  .object({
+    message: z.string().min(1),
+    retrievedContext: retrievedContextSchema.optional()
   })
   .strict();
 

@@ -1,19 +1,21 @@
 import { pool } from '../db/pool';
 import { AppError } from '../utils/errors';
 
-type MessageRecord = {
+export type RetrievedContext = Record<string, unknown> | string;
+
+export type MessageRecord = {
   id: string;
   sessionId: string;
   sender: 'user' | 'assistant' | 'system';
   content: string;
-  retrievedContext: Record<string, unknown> | null;
+  retrievedContext: RetrievedContext | null;
   createdAt: string;
 };
 
 type CreateMessageInput = {
   sender: 'user' | 'assistant' | 'system';
   content: string;
-  retrievedContext?: Record<string, unknown>;
+  retrievedContext?: RetrievedContext;
 };
 
 export async function createMessage(sessionId: string, payload: CreateMessageInput): Promise<MessageRecord> {
@@ -69,4 +71,19 @@ export async function listMessages(
     items: result.rows,
     total: countResult.rows[0].total
   };
+}
+
+export async function getRecentMessages(sessionId: string, limit = 20): Promise<MessageRecord[]> {
+  const result = await pool.query<MessageRecord>(
+    `
+    SELECT id, session_id AS "sessionId", sender, content, retrieved_context AS "retrievedContext", created_at AS "createdAt"
+    FROM chat_messages
+    WHERE session_id = $1
+    ORDER BY created_at DESC
+    LIMIT $2
+    `,
+    [sessionId, limit]
+  );
+
+  return result.rows.reverse();
 }

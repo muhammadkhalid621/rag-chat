@@ -1,9 +1,51 @@
 import express, { type Request, type Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
-import { createMessageSchema, paginationQuerySchema, sessionIdParamSchema } from '../utils/validation';
-import { createMessage, listMessages } from '../services/messageService';
+import {
+  createMessageSchema,
+  generateChatSchema,
+  paginationQuerySchema,
+  sessionIdParamSchema
+} from '../utils/validation';
+import { generateAssistantReply } from '../services/aiChatService';
+import { createMessage, getRecentMessages, listMessages } from '../services/messageService';
 
 const router = express.Router({ mergeParams: true });
+
+router.post(
+  '/chat',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = sessionIdParamSchema.parse(req.params);
+    const { message, retrievedContext } = generateChatSchema.parse(req.body);
+
+    const userMessage = await createMessage(id, {
+      sender: 'user',
+      content: message,
+      retrievedContext
+    });
+
+    const history = await getRecentMessages(id, 20);
+    const historyWithoutCurrentUser = history
+      .filter((item) => item.id !== userMessage.id)
+      .map((item) => ({ role: item.sender, content: item.content }));
+
+    const assistantContent = await generateAssistantReply({
+      history: historyWithoutCurrentUser,
+      userMessage: message,
+      retrievedContext
+    });
+
+    const assistantMessage = await createMessage(id, {
+      sender: 'assistant',
+      content: assistantContent,
+      retrievedContext
+    });
+
+    res.status(201).json({
+      userMessage,
+      assistantMessage
+    });
+  })
+);
 
 router.post(
   '/',

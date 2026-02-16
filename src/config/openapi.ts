@@ -143,7 +143,10 @@ export const openApiSpec = {
                 properties: {
                   sender: { type: 'string', enum: ['user', 'assistant', 'system'] },
                   content: { type: 'string' },
-                  retrievedContext: { nullable: true }
+                  retrievedContext: {
+                    oneOf: [{ type: 'object', additionalProperties: true }, { type: 'string' }],
+                    nullable: true
+                  }
                 }
               }
             }
@@ -162,6 +165,33 @@ export const openApiSpec = {
         ],
         responses: {
           200: { description: 'Messages retrieved' }
+        }
+      }
+    },
+    '/api/v1/sessions/{id}/messages/chat': {
+      post: {
+        summary: 'Generate assistant reply using OpenAI and store both messages',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['message'],
+                properties: {
+                  message: { type: 'string' },
+                  retrievedContext: {
+                    oneOf: [{ type: 'object', additionalProperties: true }, { type: 'string' }],
+                    nullable: true
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          201: { description: 'User and assistant messages stored' }
         }
       }
     }

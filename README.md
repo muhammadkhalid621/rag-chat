@@ -6,6 +6,7 @@ Production-ready backend microservice for storing and managing chat histories fr
 
 - Chat session management (create, list, rename, favorite/unfavorite, delete)
 - Message storage with optional retrieved context payload
+- OpenAI-powered chat generation endpoint that persists user and assistant messages
 - Pagination for sessions and messages
 - Strict request validation with Zod (body, params, query)
 - Strict environment validation on startup
@@ -51,6 +52,9 @@ Copy `.env.example` to `.env` and update values.
 | `PORT` | API port | `3005` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@db:5432/rag_chat` |
 | `API_KEY` | Required API key for all `/api/*` routes | `my-secret-key` |
+| `OPENAI_API_KEY` | OpenAI API key used by chat generation endpoint | `sk-...` |
+| `OPENAI_MODEL` | OpenAI model for generated assistant replies | `gpt-4o-mini` |
+| `OPENAI_BASE_URL` | OpenAI API base URL | `https://api.openai.com/v1` |
 | `RATE_LIMIT_WINDOW_MS` | Rate limit window in milliseconds | `60000` |
 | `RATE_LIMIT_MAX_REQUESTS` | Max requests per window per IP | `120` |
 | `LOG_LEVEL` | Logging level | `info` |
@@ -151,6 +155,7 @@ Base path: `/api/v1`
 
 - `POST /sessions/:id/messages` - add message to session
 - `GET /sessions/:id/messages?page=1&limit=20` - retrieve paginated message history
+- `POST /sessions/:id/messages/chat` - generate assistant reply via OpenAI and store both messages
 
 ### Health
 
@@ -175,6 +180,15 @@ curl -X POST http://localhost:3005/api/v1/sessions/<SESSION_ID>/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: my-secret-key" \
   -d '{"sender":"assistant","content":"Hello!","retrievedContext":{"docs":["policy-1"]}}'
+```
+
+Generate assistant reply and persist chat turn:
+
+```bash
+curl -X POST http://localhost:3005/api/v1/sessions/<SESSION_ID>/messages/chat \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: my-secret-key" \
+  -d '{"message":"Summarize the retrieved policy","retrievedContext":{"docs":["policy-1"]}}'
 ```
 
 ## Tests
