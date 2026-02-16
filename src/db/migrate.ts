@@ -1,4 +1,4 @@
-const { pool } = require('./pool');
+import { pool } from './pool';
 
 const SCHEMA_SQL = `
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -31,8 +31,6 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_session_created
   ON chat_messages (session_id, created_at ASC);
 `;
 
-async function migrate() {
+export async function migrate(): Promise<void> {
   await pool.query(SCHEMA_SQL);
 }
-
-module.exports = { migrate };

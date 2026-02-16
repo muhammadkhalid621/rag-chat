@@ -1,7 +1,22 @@
-const { pool } = require('../db/pool');
-const { AppError } = require('../utils/errors');
+import { pool } from '../db/pool';
+import { AppError } from '../utils/errors';
 
-async function createMessage(sessionId, { sender, content, retrievedContext }) {
+type MessageRecord = {
+  id: string;
+  sessionId: string;
+  sender: 'user' | 'assistant' | 'system';
+  content: string;
+  retrievedContext: Record<string, unknown> | null;
+  createdAt: string;
+};
+
+type CreateMessageInput = {
+  sender: 'user' | 'assistant' | 'system';
+  content: string;
+  retrievedContext?: Record<string, unknown>;
+};
+
+export async function createMessage(sessionId: string, payload: CreateMessageInput): Promise<MessageRecord> {
   const sessionCheck = await pool.query('SELECT id FROM chat_sessions WHERE id = $1', [sessionId]);
   if (sessionCheck.rowCount === 0) {
     throw new AppError(404, 'Session not found');
@@ -13,20 +28,28 @@ async function createMessage(sessionId, { sender, content, retrievedContext }) {
     RETURNING id, session_id AS "sessionId", sender, content, retrieved_context AS "retrievedContext", created_at AS "createdAt"
   `;
 
-  const result = await pool.query(query, [sessionId, sender, content, retrievedContext || null]);
+  const result = await pool.query<MessageRecord>(query, [
+    sessionId,
+    payload.sender,
+    payload.content,
+    payload.retrievedContext ?? null
+  ]);
 
   await pool.query('UPDATE chat_sessions SET updated_at = NOW() WHERE id = $1', [sessionId]);
 
   return result.rows[0];
 }
 
-async function listMessages(sessionId, { limit, offset }) {
+export async function listMessages(
+  sessionId: string,
+  { limit, offset }: { limit: number; offset: number }
+): Promise<{ items: MessageRecord[]; total: number }> {
   const sessionCheck = await pool.query('SELECT id FROM chat_sessions WHERE id = $1', [sessionId]);
   if (sessionCheck.rowCount === 0) {
     throw new AppError(404, 'Session not found');
   }
 
-  const result = await pool.query(
+  const result = await pool.query<MessageRecord>(
     `
     SELECT id, session_id AS "sessionId", sender, content, retrieved_context AS "retrievedContext", created_at AS "createdAt"
     FROM chat_messages
@@ -37,7 +60,7 @@ async function listMessages(sessionId, { limit, offset }) {
     [sessionId, limit, offset]
   );
 
-  const countResult = await pool.query(
+  const countResult = await pool.query<{ total: number }>(
     'SELECT COUNT(*)::int AS total FROM chat_messages WHERE session_id = $1',
     [sessionId]
   );
@@ -47,5 +70,3 @@ async function listMessages(sessionId, { limit, offset }) {
     total: countResult.rows[0].total
   };
 }
-
-module.exports = { createMessage, listMessages };

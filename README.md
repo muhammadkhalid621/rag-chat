@@ -29,8 +29,8 @@ Production-ready backend microservice for storing and managing chat histories fr
 
 ```txt
 src/
-  app.js
-  index.js
+  app.ts
+  index.ts
   config/
   db/
   middlewares/
@@ -98,7 +98,13 @@ npm install
 npm run migrate
 ```
 
-4. Start server:
+4. Build TypeScript:
+
+```bash
+npm run build
+```
+
+5. Start server:
 
 ```bash
 npm run start

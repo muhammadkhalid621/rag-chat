@@ -1,15 +1,15 @@
-const { migrate } = require('../db/migrate');
-const { pool } = require('../db/pool');
-const { logger } = require('../config/logger');
+import { logger } from '../config/logger';
+import { migrate } from '../db/migrate';
+import { pool } from '../db/pool';
 
 const MAX_RETRIES = 10;
 const RETRY_DELAY_MS = 2000;
 
-async function sleep(ms) {
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function run() {
+async function run(): Promise<void> {
   let attempt = 0;
 
   while (attempt < MAX_RETRIES) {
@@ -30,4 +30,4 @@ async function run() {
   }
 }
 
-run();
+void run();

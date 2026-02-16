@@ -1,25 +1,19 @@
-const express = require('express');
-const { asyncHandler } = require('../utils/asyncHandler');
-const {
+import express, { type Request, type Response } from 'express';
+import { asyncHandler } from '../utils/asyncHandler';
+import {
   createSessionSchema,
-  updateSessionTitleSchema,
-  updateSessionFavoriteSchema,
+  listSessionsQuerySchema,
   sessionIdParamSchema,
-  listSessionsQuerySchema
-} = require('../utils/validation');
-const {
-  createSession,
-  listSessions,
-  renameSession,
-  setFavorite,
-  deleteSession
-} = require('../services/sessionService');
+  updateSessionFavoriteSchema,
+  updateSessionTitleSchema
+} from '../utils/validation';
+import { createSession, deleteSession, listSessions, renameSession, setFavorite } from '../services/sessionService';
 
 const router = express.Router();
 
 router.post(
   '/',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const payload = createSessionSchema.parse(req.body);
     const session = await createSession(payload);
     res.status(201).json(session);
@@ -28,13 +22,13 @@ router.post(
 
 router.get(
   '/',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { userId, page, limit } = listSessionsQuerySchema.parse(req.query);
     const offset = (page - 1) * limit;
 
     const data = await listSessions({ userId, limit, offset });
 
-    return res.status(200).json({
+    res.status(200).json({
       items: data.items,
       pagination: {
         page,
@@ -48,7 +42,7 @@ router.get(
 
 router.patch(
   '/:id/rename',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { id } = sessionIdParamSchema.parse(req.params);
     const { title } = updateSessionTitleSchema.parse(req.body);
     const session = await renameSession(id, title);
@@ -58,7 +52,7 @@ router.patch(
 
 router.patch(
   '/:id/favorite',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { id } = sessionIdParamSchema.parse(req.params);
     const { isFavorite } = updateSessionFavoriteSchema.parse(req.body);
     const session = await setFavorite(id, isFavorite);
@@ -68,11 +62,11 @@ router.patch(
 
 router.delete(
   '/:id',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { id } = sessionIdParamSchema.parse(req.params);
     await deleteSession(id);
     res.status(204).send();
   })
 );
 
-module.exports = { sessionsRouter: router };
+export const sessionsRouter = router;

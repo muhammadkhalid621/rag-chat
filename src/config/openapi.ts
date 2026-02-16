@@ -1,4 +1,4 @@
-const openApiSpec = {
+export const openApiSpec = {
   openapi: '3.0.3',
   info: {
     title: 'RAG Chat Storage Microservice API',
@@ -167,5 +167,3 @@ const openApiSpec = {
     }
   }
 };
-
-module.exports = { openApiSpec };

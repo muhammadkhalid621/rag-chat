@@ -1,13 +1,13 @@
-const express = require('express');
-const { asyncHandler } = require('../utils/asyncHandler');
-const { createMessageSchema, sessionIdParamSchema, paginationQuerySchema } = require('../utils/validation');
-const { createMessage, listMessages } = require('../services/messageService');
+import express, { type Request, type Response } from 'express';
+import { asyncHandler } from '../utils/asyncHandler';
+import { createMessageSchema, paginationQuerySchema, sessionIdParamSchema } from '../utils/validation';
+import { createMessage, listMessages } from '../services/messageService';
 
 const router = express.Router({ mergeParams: true });
 
 router.post(
   '/',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { id } = sessionIdParamSchema.parse(req.params);
     const payload = createMessageSchema.parse(req.body);
 
@@ -18,7 +18,7 @@ router.post(
 
 router.get(
   '/',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { id } = sessionIdParamSchema.parse(req.params);
     const { page, limit } = paginationQuerySchema.parse(req.query);
     const offset = (page - 1) * limit;
@@ -37,4 +37,4 @@ router.get(
   })
 );
 
-module.exports = { messagesRouter: router };
+export const messagesRouter = router;

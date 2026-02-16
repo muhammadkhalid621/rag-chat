@@ -1,7 +1,7 @@
-const rateLimit = require('express-rate-limit');
-const { config } = require('../config/env');
+import rateLimit from 'express-rate-limit';
+import { config } from '../config/env';
 
-const apiRateLimiter = rateLimit({
+export const apiRateLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
   max: config.rateLimitMaxRequests,
   standardHeaders: true,
@@ -10,5 +10,3 @@ const apiRateLimiter = rateLimit({
     error: 'Too many requests, please try again later.'
   }
 });
-
-module.exports = { apiRateLimiter };

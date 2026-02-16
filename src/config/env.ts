@@ -1,5 +1,5 @@
-const dotenv = require('dotenv');
-const { z } = require('zod');
+import dotenv from 'dotenv';
+import { z } from 'zod';
 
 dotenv.config();
 
@@ -28,7 +28,7 @@ if (!parsedEnv.success) {
   throw new Error(`Invalid environment configuration: ${message}`);
 }
 
-const config = {
+export const config = {
   env: parsedEnv.data.NODE_ENV,
   port: parsedEnv.data.PORT,
   databaseUrl: parsedEnv.data.DATABASE_URL,
@@ -38,5 +38,3 @@ const config = {
   logLevel: parsedEnv.data.LOG_LEVEL,
   corsOrigin: parsedEnv.data.CORS_ORIGIN
 };
-
-module.exports = { config };

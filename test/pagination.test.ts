@@ -1,7 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-
-const { getPagination } = require('../src/utils/pagination');
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { getPagination } from '../src/utils/pagination';
 
 test('getPagination applies defaults', () => {
   const result = getPagination({});
