@@ -1,24 +1,15 @@
-FROM node:20-alpine AS builder
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
 
 WORKDIR /app
-
-COPY package*.json tsconfig.json ./
-RUN npm ci
+COPY pom.xml ./
+RUN mvn -q -DskipTests dependency:go-offline
 
 COPY src ./src
-COPY test ./test
+RUN mvn -q -DskipTests clean package
 
-RUN npm run build
-
-FROM node:20-alpine AS runner
-
+FROM eclipse-temurin:21-jre
 WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --omit=dev
-
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/target/rag-chat-storage-service-1.0.0.jar app.jar
 
 EXPOSE 3005
-
-CMD ["sh", "-c", "node dist/src/scripts/migrate.js && node dist/src/index.js"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

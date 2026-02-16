@@ -1,0 +1,48 @@
+server:
+  port: ${PORT:3005}
+
+spring:
+  application:
+    name: rag-chat-storage-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/rag_chat}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:20}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:30000}
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:5000}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /docs
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+
+app:
+  api-key: ${API_KEY}
+  cors-origin: ${CORS_ORIGIN:http://localhost:3005}
+  rate-limit:
+    max-requests: ${RATE_LIMIT_MAX_REQUESTS:120}
+    window: ${RATE_LIMIT_WINDOW_MS:60000ms}
+  open-ai:
+    api-key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-4o-mini}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+    timeout: ${OPENAI_TIMEOUT_MS:20000ms}

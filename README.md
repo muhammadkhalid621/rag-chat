@@ -1,148 +1,97 @@
-# RAG Chat Storage Microservice
+# RAG Chat Storage Microservice (Java)
 
 Production-ready backend microservice for storing and managing chat histories from a RAG chatbot system.
 
-## Features
-
-- Chat session management (create, list, rename, favorite/unfavorite, delete)
-- Message storage with optional retrieved context payload
-- OpenAI-powered chat generation endpoint that persists user and assistant messages
-- Pagination for sessions and messages
-- Strict request validation with Zod (body, params, query)
-- Strict environment validation on startup
-- API key authentication (`x-api-key` header)
-- API rate limiting
-- Centralized request logging with Pino
-- Global error handling
-- Health checks (`/health/live`, `/health/ready`)
-- Swagger/OpenAPI docs (`/docs`)
-- Dockerized local setup with PostgreSQL + Adminer
-- Basic unit tests
-
 ## Tech Stack
 
-- Node.js 20
-- Express.js
-- PostgreSQL (`pg`)
+- Java 21
+- Spring Boot 3
+- PostgreSQL
+- Flyway migrations
+- Springdoc OpenAPI (Swagger UI)
+- Bucket4j rate limiting
 - Docker / Docker Compose
 
-## Project Structure
+## Features
 
-```txt
-src/
-  app.ts
-  index.ts
-  config/
-  db/
-  middlewares/
-  routes/
-  services/
-  utils/
-  scripts/
-test/
-```
+- Chat session management: create, list, rename, favorite/unfavorite, delete
+- Message storage with sender, content, optional retrieved context
+- OpenAI chat generation endpoint that stores both user and assistant messages
+- API key authentication (`x-api-key`)
+- Rate limiting (per-IP)
+- Request ID propagation (`x-request-id`) for tracing
+- Global error handling and validation
+- Health checks: `/health/live`, `/health/ready`
+- Swagger docs: `/docs`
+- Pagination for sessions and messages
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and update values.
+Copy `.env.example` to `.env` and fill values.
 
 | Variable | Description | Example |
 |---|---|---|
-| `NODE_ENV` | Runtime environment | `development` |
-| `PORT` | API port | `3005` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@db:5432/rag_chat` |
-| `API_KEY` | Required API key for all `/api/*` routes | `my-secret-key` |
-| `OPENAI_API_KEY` | OpenAI API key used by chat generation endpoint | `sk-...` |
-| `OPENAI_MODEL` | OpenAI model for generated assistant replies | `gpt-4o-mini` |
-| `OPENAI_BASE_URL` | OpenAI API base URL | `https://api.openai.com/v1` |
-| `OPENAI_TIMEOUT_MS` | Timeout (ms) for OpenAI requests | `20000` |
-| `DB_POOL_MAX` | Maximum PostgreSQL pool connections | `20` |
-| `DB_POOL_IDLE_TIMEOUT_MS` | PostgreSQL idle connection timeout (ms) | `30000` |
-| `DB_POOL_CONNECTION_TIMEOUT_MS` | PostgreSQL connection acquisition timeout (ms) | `5000` |
-| `RATE_LIMIT_WINDOW_MS` | Rate limit window in milliseconds | `60000` |
-| `RATE_LIMIT_MAX_REQUESTS` | Max requests per window per IP | `120` |
-| `LOG_LEVEL` | Logging level | `info` |
-| `CORS_ORIGIN` | Allowed origin(s), comma-separated | `http://localhost:3005` |
+| `PORT` | Service port | `3005` |
+| `DATABASE_URL` | JDBC URL | `jdbc:postgresql://db:5432/rag_chat` |
+| `DB_USERNAME` | DB user | `postgres` |
+| `DB_PASSWORD` | DB password | `postgres` |
+| `DB_POOL_MAX` | Max DB pool size | `20` |
+| `DB_POOL_IDLE_TIMEOUT_MS` | Pool idle timeout | `30000` |
+| `DB_POOL_CONNECTION_TIMEOUT_MS` | Pool connection timeout | `5000` |
+| `API_KEY` | API key for `/api/*` endpoints | `my-secret-key` |
+| `OPENAI_API_KEY` | OpenAI API key | `sk-...` |
+| `OPENAI_MODEL` | OpenAI model | `gpt-4o-mini` |
+| `OPENAI_BASE_URL` | OpenAI base URL | `https://api.openai.com/v1` |
+| `OPENAI_TIMEOUT_MS` | OpenAI timeout | `20000` |
+| `RATE_LIMIT_WINDOW_MS` | Rate limit window | `60000` |
+| `RATE_LIMIT_MAX_REQUESTS` | Max requests per window | `120` |
+| `LOG_LEVEL` | Logging level | `INFO` |
+| `CORS_ORIGIN` | Allowed origin(s) | `http://localhost:3005` |
 
-## Run Locally with Docker
-
-1. Create env file:
+## Run with Docker
 
 ```bash
 cp .env.example .env
-```
-
-2. Start services:
-
-```bash
 docker compose up --build
 ```
 
-3. Access:
+Access:
 
 - API: `http://localhost:3005`
 - Swagger UI: `http://localhost:3005/docs`
-- PostgreSQL (host): `localhost:5433`
 - Adminer: `http://localhost:8081`
-  - System: `PostgreSQL`
-  - Server: `db`
-  - Username: `postgres`
-  - Password: `postgres`
-  - Database: `rag_chat`
+- PostgreSQL host access: `localhost:5433`
 
-## Run Without Docker
+## Run Locally (Without Docker)
 
-1. Install dependencies:
+1. Ensure PostgreSQL is running.
+2. Set local values in `.env` (use `localhost` in `DATABASE_URL`).
+3. Run:
 
 ```bash
-npm install
+mvn spring-boot:run
 ```
 
-2. Set `.env` with a valid local PostgreSQL `DATABASE_URL`.
-
-3. Run migrations:
+Build jar:
 
 ```bash
-npm run migrate
-```
-
-4. Build TypeScript:
-
-```bash
-npm run build
-```
-
-5. Start server:
-
-```bash
-npm run start
+mvn clean package
+java -jar target/rag-chat-storage-service-1.0.0.jar
 ```
 
 ## API Authentication
 
-Include API key header on all `/api/*` requests:
+All `/api/*` endpoints require:
 
 ```http
 x-api-key: <your_api_key>
 ```
 
-Health endpoints are intentionally public:
+Public endpoints:
 
 - `GET /health/live`
 - `GET /health/ready`
-
-## Validation and Error Handling
-
-- Request validation is enforced using Zod for:
-  - body payloads
-  - path params (UUID session ID)
-  - query params (`userId`, `page`, `limit`)
-- Unknown body/query fields are rejected by strict schemas.
-- Invalid input returns `400` with structured validation details.
-- Missing/invalid API key returns `401`.
-- Not found resources return `404`.
-- Unexpected server errors return `500` and are logged centrally.
-- Each request gets an `x-request-id` for traceability in logs and error responses.
+- `/docs`
 
 ## API Endpoints
 
@@ -150,90 +99,27 @@ Base path: `/api/v1`
 
 ### Sessions
 
-- `POST /sessions` - create session
-- `GET /sessions?userId=<id>&page=1&limit=20` - list user sessions
-- `PATCH /sessions/:id/rename` - rename session
-- `PATCH /sessions/:id/favorite` - mark/unmark favorite
-- `DELETE /sessions/:id` - delete session and associated messages
+- `POST /sessions`
+- `GET /sessions?userId=<id>&page=1&limit=20`
+- `PATCH /sessions/{id}/rename`
+- `PATCH /sessions/{id}/favorite`
+- `DELETE /sessions/{id}`
 
 ### Messages
 
-- `POST /sessions/:id/messages` - add message to session
-- `GET /sessions/:id/messages?page=1&limit=20` - retrieve paginated message history
-- `POST /sessions/:id/messages/chat` - generate assistant reply via OpenAI and store both messages
-
-### Health
-
-- `GET /health/live` - liveness
-- `GET /health/ready` - readiness (checks DB connectivity)
-
-## Example Requests
-
-Create session:
-
-```bash
-curl -X POST http://localhost:3005/api/v1/sessions \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: my-secret-key" \
-  -d '{"userId":"user-123","title":"Support Chat"}'
-```
-
-Add message:
-
-```bash
-curl -X POST http://localhost:3005/api/v1/sessions/<SESSION_ID>/messages \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: my-secret-key" \
-  -d '{"sender":"assistant","content":"Hello!","retrievedContext":{"docs":["policy-1"]}}'
-```
-
-Generate assistant reply and persist chat turn:
-
-```bash
-curl -X POST http://localhost:3005/api/v1/sessions/<SESSION_ID>/messages/chat \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: my-secret-key" \
-  -d '{"message":"Summarize the retrieved policy","retrievedContext":{"docs":["policy-1"]}}'
-```
+- `POST /sessions/{id}/messages`
+- `GET /sessions/{id}/messages?page=1&limit=20`
+- `POST /sessions/{id}/messages/chat`
 
 ## Tests
 
-Run unit tests:
-
 ```bash
-npm test
+mvn test
 ```
 
-## Notes
+## Best Practice Coverage
 
-- Deleting a session cascades to its messages via foreign key `ON DELETE CASCADE`.
-- Session `updatedAt` is refreshed when new messages are added or when session metadata changes.
-
-## Case Study Checklist
-
-### Core Functionalities
-
-- Start and maintain chat sessions: Implemented
-- Save messages with sender/content/optional context: Implemented
-- Rename chat sessions: Implemented
-- Mark/unmark sessions as favorite: Implemented
-- Delete session and associated messages: Implemented
-- Retrieve session message history: Implemented
-
-### Technical Expectations
-
-- Backend language/framework/database: Node.js + Express + PostgreSQL
-- Environment-specific config with `.env`: Implemented
-- API key authentication from env: Implemented
-- Rate limiting: Implemented
-- Centralized logging + global error handling: Implemented
-- Dockerized local setup: Implemented
-
-### Bonus
-
-- Health check endpoints: Implemented
-- Swagger/OpenAPI documentation: Implemented
-- Database management tool in Docker (Adminer): Implemented
-- Basic unit tests: Implemented
-- CORS configuration: Implemented
-- Pagination support: Implemented
+- Scalability: stateless APIs, DB indexing, pagination, configurable DB pool
+- Security: API key auth, CORS, rate limiting, security headers, strict validation
+- Error handling: centralized exception handling + structured error payloads
+- Configuration: environment-driven config via `.env` and typed properties
