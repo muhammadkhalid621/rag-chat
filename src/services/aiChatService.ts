@@ -58,19 +58,35 @@ export async function generateAssistantReply(params: {
     }
   ];
 
-  const response = await fetch(`${config.openAiBaseUrl}/responses`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${config.openAiApiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: config.openAiModel,
-      input
-    } satisfies ResponsesApiPayload)
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), config.openAiTimeoutMs);
 
-  const data = (await response.json()) as OpenAiResponsesApiResult;
+  let response: globalThis.Response;
+  let data: OpenAiResponsesApiResult;
+
+  try {
+    response = await fetch(`${config.openAiBaseUrl}/responses`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.openAiApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: config.openAiModel,
+        input
+      } satisfies ResponsesApiPayload),
+      signal: controller.signal
+    });
+
+    data = (await response.json()) as OpenAiResponsesApiResult;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new AppError(504, 'OpenAI request timed out');
+    }
+    throw new AppError(502, 'OpenAI request failed');
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const message = data.error?.message || 'OpenAI request failed';

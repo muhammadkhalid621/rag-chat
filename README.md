@@ -55,6 +55,10 @@ Copy `.env.example` to `.env` and update values.
 | `OPENAI_API_KEY` | OpenAI API key used by chat generation endpoint | `sk-...` |
 | `OPENAI_MODEL` | OpenAI model for generated assistant replies | `gpt-4o-mini` |
 | `OPENAI_BASE_URL` | OpenAI API base URL | `https://api.openai.com/v1` |
+| `OPENAI_TIMEOUT_MS` | Timeout (ms) for OpenAI requests | `20000` |
+| `DB_POOL_MAX` | Maximum PostgreSQL pool connections | `20` |
+| `DB_POOL_IDLE_TIMEOUT_MS` | PostgreSQL idle connection timeout (ms) | `30000` |
+| `DB_POOL_CONNECTION_TIMEOUT_MS` | PostgreSQL connection acquisition timeout (ms) | `5000` |
 | `RATE_LIMIT_WINDOW_MS` | Rate limit window in milliseconds | `60000` |
 | `RATE_LIMIT_MAX_REQUESTS` | Max requests per window per IP | `120` |
 | `LOG_LEVEL` | Logging level | `info` |
@@ -138,6 +142,7 @@ Health endpoints are intentionally public:
 - Missing/invalid API key returns `401`.
 - Not found resources return `404`.
 - Unexpected server errors return `500` and are logged centrally.
+- Each request gets an `x-request-id` for traceability in logs and error responses.
 
 ## API Endpoints
 

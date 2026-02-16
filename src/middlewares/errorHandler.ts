@@ -9,9 +9,12 @@ export function notFoundHandler(_req: Request, _res: Response, next: NextFunctio
 }
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+  const requestId = (req as Request & { id?: string }).id || req.header('x-request-id') || undefined;
+
   if (err instanceof ZodError) {
     res.status(400).json({
       error: 'Validation failed',
+      requestId,
       details: err.errors.map((issue) => ({
         path: issue.path.join('.'),
         message: issue.message
@@ -20,7 +23,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return;
   }
 
-  const errorWithStatus = err as Error & { statusCode?: number; details?: unknown };
+  const errorWithStatus = err as Error & { statusCode?: number; details?: unknown; errorCode?: string };
   const statusCode = errorWithStatus.statusCode ?? 500;
 
   if (statusCode >= 500) {
@@ -29,6 +32,8 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 
   res.status(statusCode).json({
     error: errorWithStatus.message || 'Internal server error',
+    requestId,
+    ...(errorWithStatus.errorCode ? { code: errorWithStatus.errorCode } : {}),
     ...(errorWithStatus.details ? { details: errorWithStatus.details } : {})
   });
 };

@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import cors from 'cors';
-import express from 'express';
+import express, { type Request } from 'express';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
 import swaggerUi from 'swagger-ui-express';
@@ -14,10 +15,23 @@ import { messagesRouter } from './routes/messages';
 import { sessionsRouter } from './routes/sessions';
 
 export const app = express();
+app.disable('x-powered-by');
 
 app.use(
   pinoHttp({
-    logger
+    logger,
+    genReqId: (req, res) => {
+      const headerRequestId = req.headers['x-request-id'];
+      const requestId =
+        typeof headerRequestId === 'string' && headerRequestId.trim().length > 0
+          ? headerRequestId
+          : randomUUID();
+      res.setHeader('x-request-id', requestId);
+      return requestId;
+    },
+    customProps: (req: Request) => ({
+      requestId: (req as Request & { id?: string }).id
+    })
   })
 );
 app.use(helmet());
